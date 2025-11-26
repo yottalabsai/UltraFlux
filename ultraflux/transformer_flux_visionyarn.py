@@ -338,7 +338,17 @@ class FluxAttention(torch.nn.Module, AttentionModuleMixin):
                 f"joint_attention_kwargs {unused_kwargs} are not expected by {self.processor.__class__.__name__} and will be ignored."
             )
         kwargs = {k: w for k, w in kwargs.items() if k in attn_parameters}
+
+        # --- FIX GQA COMPATIBILITY ---
+        # Diffusers dispatch passes enable_gqa=None which breaks PyTorch SDPA.
+        if "enable_gqa" in kwargs:
+            if kwargs["enable_gqa"] is None:
+                kwargs["enable_gqa"] = False
+            else:
+                kwargs["enable_gqa"] = bool(kwargs["enable_gqa"])
+
         return self.processor(self, hidden_states, encoder_hidden_states, attention_mask, image_rotary_emb, **kwargs)
+
 
 
 @maybe_allow_in_graph

@@ -50,7 +50,9 @@ prompts = [
 
 ]
 
-
+prompts = [    
+    "A vast rocky landscape dominated by towering, weathered stone formations, bathed in the ethereal glow of a vibrant night sky filled with a sea of stars, the Milky Way stretching across the heavens, captured from a low angle to emphasize the immense scale of the rocks against the expansive cosmos above. The scene is illuminated by soft, cool moonlight, casting long, dramatic shadows on the textured rock surfaces. The color palette is rich with deep blues, purples, and silvery whites, creating a serene, otherworldly atmosphere.",
+]
 
 
 from pathlib import Path

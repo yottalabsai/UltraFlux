@@ -32,17 +32,6 @@ _pipeline_lock = threading.Lock()
 _inference_lock = threading.Lock()
 
 
-# ============================================================================
-#  INTERNAL: SAFE TRANSFORMER CALL WRAPPER
-#  This is the ONLY RELIABLE place to strip unwanted kwargs like enable_gqa.
-# ============================================================================
-def safe_transformer_call(model, **kwargs):
-    bad_keys = ["enable_gqa", "use_gqa", "gqa"]
-    for key in bad_keys:
-        if key in kwargs:
-            kwargs.pop(key)
-    return model(**kwargs)
-
 
 # ============================================================================
 #  PIPELINE LOADER (Lazy, thread-safe)
@@ -69,13 +58,6 @@ def _load_pipeline() -> FluxPipeline:
             torch_dtype=torch.bfloat16,
         )
 
-        # ------------------------------------------------------------
-        # FIX 1: Remove enable_gqa from model configs
-        # (Prevents Diffusers from forwarding it later)
-        # ------------------------------------------------------------
-        for cfg in [vae.config, transformer.config]:
-            if hasattr(cfg, "enable_gqa"):
-                delattr(cfg, "enable_gqa")
 
         # --- Load Pipeline ---
         pipe = FluxPipeline.from_pretrained(
@@ -90,17 +72,6 @@ def _load_pipeline() -> FluxPipeline:
 
         pipe = pipe.to(DEVICE)
         pipe.set_progress_bar_config(disable=True)
-
-        # ------------------------------------------------------------
-        # FIX 2: Override ONLY the internal transformer call
-        # This is the correct layer where Diffusers inject config args.
-        # ------------------------------------------------------------
-        old_transformer_call = pipe.transformer.__call__
-
-        def patched_call(*args, **kwargs):
-            return safe_transformer_call(old_transformer_call, *args, **kwargs)
-
-        pipe.transformer.__call__ = patched_call
 
         _pipeline = pipe
         return _pipeline
