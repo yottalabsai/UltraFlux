@@ -118,7 +118,7 @@ def healthz():
     }
 
 
-@app.post("/generate", response_model=GenerateResponse)
+@app.post("/generate")
 def generate_image(req: GenerateRequest):
     pipeline = _load_pipeline()
 
@@ -150,10 +150,11 @@ def generate_image(req: GenerateRequest):
     out_path = RESULTS_DIR / f"ultraflux_{timestamp}.jpeg"
     image.save(out_path)
 
-    return GenerateResponse(
-        prompt=req.prompt,
-        seed=seed,
-        image_path=str(out_path.resolve()),
+    # ⬇️ Return the actual image file, not a JSON path
+    return FileResponse(
+        path=out_path,
+        media_type="image/jpeg",
+        filename=out_path.name
     )
 
 
